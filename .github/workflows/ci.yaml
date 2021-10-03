@@ -22,8 +22,8 @@ jobs:
           cat releases.json | jq -r ".[] | \"wget -O \" + . + \"/deploy.yaml https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/\" + . + \"/bundle.yaml\"" | sh
       - name: create specific files
         run: |
-          cat releases.json | jq -r ".[] | \"cat \" + . + \"/deploy.yaml | docker run --rm -i fischerscode/kfilt -i kind=CustomResourceDefinition >> \" + . + \"/deploy.crds.yaml\"" | sh
-          cat releases.json | jq -r ".[] | \"cat \" + . + \"/deploy.yaml | docker run --rm -i fischerscode/kfilt -x kind=CustomResourceDefinition >> \" + . + \"/deploy.nocrds.yaml\"" | sh
+          cat releases.json | jq -r ".[] | \"cat \" + . + \"/deploy.yaml | docker run --rm -i fischerscode/kfilt -i kind=CustomResourceDefinition > \" + . + \"/deploy.crds.yaml\"" | sh
+          cat releases.json | jq -r ".[] | \"cat \" + . + \"/deploy.yaml | docker run --rm -i fischerscode/kfilt -x kind=CustomResourceDefinition > \" + . + \"/deploy.nocrds.yaml\"" | sh
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
