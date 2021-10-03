@@ -1,2 +1,2 @@
 # prometheus-operator-deploy-files
- Files used for deploying the prometheus operator.
+Files for deploying the [prometheus operator](https://github.com/prometheus-operator/prometheus-operator).
