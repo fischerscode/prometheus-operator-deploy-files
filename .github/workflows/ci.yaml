@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  schedule:
+    - cron: "0 0,12 * * *"
+  workflow_dispatch:
+
+jobs:
+  regenerate-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          curl https://api.github.com/repos/prometheus-operator/prometheus-operator/releases | \
+          jq "map(select(.draft == false)) | map(.tag_name)" \
+          > releases.json
+      - name: create directories
+        run: |
+          mkdir -p $(cat releases.json | jq -r ".[] | .")
+      - name: download files
+        run: |
+          cat releases.json | jq -r ".[] | \"wget -O \" + . + \"/deploy.yaml https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/\" + . + \"/bundle.yaml\"" | sh
+      - name: create specific files
+        run: |
+          cat releases.json | jq -r ".[] | \"cat \" + . + \"/deploy.yaml | docker run --rm -i fischerscode/kfilt -i kind=CustomResourceDefinition >> \" + . + \"/deploy.crds.yaml\"" | sh
+          cat releases.json | jq -r ".[] | \"cat \" + . + \"/deploy.yaml | docker run --rm -i fischerscode/kfilt -x kind=CustomResourceDefinition >> \" + . + \"/deploy.nocrds.yaml\"" | sh
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ci-update-manifests
+          commit-message: Regenerate manifests
+          title: Regenerate manifests
+          body: |
+            Some changes occurred while regenerating the manifests. Please check the result.
+          assignees: fischerscode
+          reviewers: fischerscode
+          delete-branch: true
